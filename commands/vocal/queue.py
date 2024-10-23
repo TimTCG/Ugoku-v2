@@ -10,14 +10,14 @@ class Queue(commands.Cog):
 
     @commands.slash_command(
         name='queue',
-        description='Show the current queue.'
+        description='Hiển thị hàng chờ.'
     )
     async def queue(self, ctx: discord.ApplicationContext):
         guild_id = ctx.guild.id
         session = session_manager.server_sessions.get(guild_id)
 
         if session is None:
-            await ctx.respond('No active sessions!')
+            await ctx.respond('Không có phiên hoạt động!')
             return
 
         await session.display_queue(ctx)

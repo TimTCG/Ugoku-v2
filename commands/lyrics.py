@@ -20,7 +20,7 @@ class Lyrics(commands.Cog):
 
     @commands.slash_command(
         name="lyrics",
-        description='Get the lyrics of a song, or the currently playing one.'
+        description='Lấy lời của bài hát hiện tại đang phát'
     )
     async def lyrics(
         self,
@@ -41,7 +41,7 @@ class Lyrics(commands.Cog):
             if session and session.queue:
                 track_info = session.queue[0]['track_info']
             else:
-                await ctx.respond('No song is playing !')
+                await ctx.respond('Không có bài hát đang phát')
                 return
         else:
             if SPOTIFY_ENABLED:
@@ -49,7 +49,7 @@ class Lyrics(commands.Cog):
                 tracks_info = await self.bot.spotify.get_tracks(query)
 
                 if not tracks_info:
-                    await ctx.respond('No lyrics found!')
+                    await ctx.respond('Không tìm thấy lời bài hát')
                     return
                 track_info = tracks_info[0]
             else:
@@ -61,15 +61,15 @@ class Lyrics(commands.Cog):
 
         lyrics = await BotLyrics.get(track_info)
         if not lyrics:
-            await ctx.respond(lyrics or 'No lyrics found!')
+            await ctx.respond(lyrics or 'Không tìm thấy lời bài hát')
             return
 
         # CONVERT
         if convert_to:
             if not CHATBOT_ENABLED:
                 await ctx.respond(
-                    'Chatbot features need to be enabled in '
-                    'order to use lyrics conversion.'
+                    'Tính năng chatbot phải được bật '
+                    'để sử dụng tính năng chuyển đổi lời bài hát.'
                 )
                 return
             await ctx.respond('Converting~')

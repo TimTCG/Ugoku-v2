@@ -20,7 +20,7 @@ class Talk(commands.Cog):
     ) -> None:
         logging.info(f'{ctx.author.name} used /talk: "{message}"')
         await ctx.send(message)
-        await ctx.respond('Done !', ephemeral=True)
+        await ctx.respond('Xong !', ephemeral=True)
 
 
 def setup(bot):

@@ -84,7 +84,7 @@ async def get_stickerpack(
                 ).get_text(strip=True)
 
     except Exception as e:
-        logger.error(f"Error fetching or parsing the page: {e}")
+        logger.error(f"Lỗi tải trang: {e}")
         raise IncorrectURL from e
 
     # Remove unwanted characters from the pack name
@@ -98,7 +98,7 @@ async def get_stickerpack(
     # Get HTML elements of the stickers
     stickers = raw.find_all('li', {'class': 'FnStickerPreviewItem'})
     if not stickers:
-        raise ValueError("No stickers found on the page.")
+        raise ValueError("Không có sticker được tìm thấy trong trang này.")
 
     # Get sticker type and count
     sticker_type = stickers[0].get('class', [''])[2]
@@ -107,7 +107,7 @@ async def get_stickerpack(
     # Save the stickers
     logger.info(f'Downloading {pack_name}, Sticker count: {sticker_count}.')
     if ctx:
-        await ctx.edit(content='Saving the stickers...')
+        await ctx.edit(content='Đang lưu sticker...')
 
     async with ClientSession() as session:
         tasks = []
@@ -121,7 +121,7 @@ async def get_stickerpack(
     # Convert APNGs to GIFs if needed
     if sticker_type in ['animation-sticker', 'popup-sticker']:
         if ctx:
-            await ctx.edit(content='Converting APNG files to GIF...')
+            await ctx.edit(content='Đang chuyển đổi tệp APNG sang GIF...')
         await convert_to_gif(sticker_count, folder_path)
 
     # Archive the folder
@@ -130,7 +130,7 @@ async def get_stickerpack(
         archive_file.unlink()
 
     if ctx:
-        await ctx.edit(content='Archiving...')
+        await ctx.edit(content='Đang đóng gói...')
     shutil.make_archive(str(archive_path), 'zip', folder_path)
     shutil.rmtree(folder_path)
 

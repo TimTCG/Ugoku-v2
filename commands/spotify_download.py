@@ -18,7 +18,7 @@ class SpotifyDownload(commands.Cog):
 
     @commands.slash_command(
         name='download',
-        description='Download songs from Spotify.'
+        description='Tải bài hát từ Spotify.'
     )
     async def download(
         self,
@@ -40,10 +40,10 @@ class SpotifyDownload(commands.Cog):
         # - Add messages context
 
         if not SPOTIFY_ENABLED:
-            await ctx.respond(content='Spotify features are not enabled.')
+            await ctx.respond(content='Các tính năng Spotify hiện chưa được bật.')
             return
 
-        await ctx.respond('Wait a second~')
+        await ctx.respond('Chờ mình một chút nhaa~')
 
         # Quality dict
         quality_dict = {
@@ -60,7 +60,7 @@ class SpotifyDownload(commands.Cog):
                 aq=quality_dict[quality]
             )
             if not tracks:
-                await ctx.edit(content="No track has been found!")
+                await ctx.edit(content="Không tìm thấy bài hát nào!")
                 return
             # TO CHANGE, only get the first track
             track = tracks[0]
@@ -89,7 +89,7 @@ class SpotifyDownload(commands.Cog):
                     )
                 except OggVorbisHeaderError:
                     logging.warning(
-                        f"Unable to read the full header of {file_path}")
+                        f"Không thể đọc toàn bộ header của {file_path}")
 
                 size = len(data)
 
@@ -105,8 +105,8 @@ class SpotifyDownload(commands.Cog):
                 )
             else:
                 await ctx.edit(
-                    content=f"The download of {track['display_name']} "
-                    'failed: file too big.'
+                    content=f"Tải xuống {track['display_name']} "
+                    'thất bại: tệp quá lớn.'
                 )
         finally:
             self.bot.downloading = False

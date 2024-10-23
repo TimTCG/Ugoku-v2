@@ -15,25 +15,25 @@ class Pause(commands.Cog):
         session: ServerSession | None = sm.server_sessions.get(guild_id)
 
         if not session:
-            await ctx.respond("No active session!")
+            await ctx.respond("Không có phiên hoạt đông nào!")
             return
 
         voice_client = session.voice_client
 
         if voice_client is None or not voice_client.is_connected():
-            await ctx.respond("Ugoku is not connected to a voice channel.")
+            await ctx.respond("Ugoku chưa được kết nối tới kênh thoại!")
             return
 
         if voice_client.is_playing():
             voice_client.pause()
             session.last_played_time = datetime.now()
-            await ctx.respond("Paused!")
+            await ctx.respond("Đã tạm dừng!")
         else:
-            await ctx.respond("No audio is playing!")
+            await ctx.respond("Không có âm thanh nào được phát!")
 
     @commands.slash_command(
         name='pause',
-        description='Pause the current song.'
+        description='Tạm dừng bài hát hiện tại'
     )
     async def execute(self, ctx: discord.ApplicationContext) -> None:
         await self.execute_pause(ctx)

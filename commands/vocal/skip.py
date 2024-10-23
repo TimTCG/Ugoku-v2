@@ -14,18 +14,18 @@ class Skip(commands.Cog):
         guild_id = ctx.guild.id
 
         if guild_id not in sm.server_sessions:
-            await ctx.respond('No songs in queue!')
+            await ctx.respond('Không có bài hát hiện tại!')
             return
 
         session: ServerSession = sm.server_sessions[guild_id]
 
         if session.queue:
-            await ctx.respond('Skipping!')
+            await ctx.respond('Đang bỏ qua!')
             session.skipped = True
 
             if session.loop_current:
                 session.queue.pop(0)
-                await ctx.send('Loop the current song disabled.')
+                await ctx.send('Đã tắt lặp lại bài hát hiện tại.')
                 session.loop_current, False
 
             if len(session.queue) == 1:
@@ -36,11 +36,11 @@ class Skip(commands.Cog):
                 session.voice_client.pause()
                 await session.play_next(ctx)
         else:
-            await ctx.respond('No songs in queue!')
+            await ctx.respond('Không có bài hát trong hàng chờ!')
 
     @commands.slash_command(
         name='skip',
-        description='Skip the current song.'
+        description='Bỏ qua bài hát hiện tại.'
     )
     async def skip(self, ctx: discord.ApplicationContext) -> None:
         await self.execute_skip(ctx)

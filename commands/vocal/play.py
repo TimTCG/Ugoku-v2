@@ -31,10 +31,10 @@ class Play(commands.Cog):
         # Connect to the voice channel
         session = await session_manager.connect(ctx, self.bot)
         if not session:
-            await respond('You are not in a voice channel!')
+            await respond('Bạn đang không ở trong kênh thoại!')
             return
 
-        await respond('Give me a second~')
+        await respond('Chờ mình một lát nha~')
         
         source = source.lower()
 
@@ -50,16 +50,16 @@ class Play(commands.Cog):
         # Else, search Spotify
         elif source == 'spotify':
             if not SPOTIFY_ENABLED:
-                await edit(content='Spotify features are not enabled.')
+                await edit(content='Các tính năng Spotify hiện chưa được bật.')
                 return
             await play_spotify(ctx, query, session, interaction=interaction)
 
         else:
-            await edit(content='wut duh')
+            await edit(content='ôi lmao')
 
     @commands.slash_command(
         name='play',
-        description='Select a song to play.'
+        description='Chọn một bài hát để phát.'
     )
     async def play(
         self,

@@ -27,7 +27,7 @@ api.bot = bot
 
 @bot.event 
 async def on_ready() -> None:
-    logging.info(f"{bot.user} is running !")
+    logging.info(f"{bot.user} đang chạy !")
     if SPOTIFY_ENABLED:
         spotify_sessions = SpotifySessions()
         await spotify_sessions.init_spotify()

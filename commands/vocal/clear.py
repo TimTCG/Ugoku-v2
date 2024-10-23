@@ -12,7 +12,7 @@ class Clear(commands.Cog):
 
     @commands.slash_command(
         name='clear',
-        description='Clear the queue and stop the current song.'
+        description='Xóa hàng đợi và dừng nhạc đang phát.'
     )
     async def clear(self, ctx: discord.ApplicationContext) -> None:
         guild_id = ctx.guild.id
@@ -29,7 +29,7 @@ class Clear(commands.Cog):
                 session.last_played_time = datetime.now()
                 voice_client.stop()
 
-            await ctx.respond('Queue cleared!')
+            await ctx.respond('Đã xóa hàng chờ')
 
 
 def setup(bot):

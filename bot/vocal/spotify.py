@@ -54,9 +54,9 @@ class SpotifySessions:
                 client_id=self.config.client_id,
                 client_secret=self.config.client_secret
             ))
-            logging.info("Spotify sessions initialized successfully")
+            logging.info("Thiết lập phiên Spotify thành công")
         except Exception as e:
-            logging.error(f"Error initializing Spotify sessions: {str(e)}")
+            logging.error(f"Lỗi thiết lập phiên Spotify: {str(e)}")
             raise
 
     async def librespot_refresh_loop(self) -> None:
@@ -79,12 +79,12 @@ class SpotifySessions:
             await self.lp.generate_session()
         except Exception as e:
             logging.error(
-                f"An error occurred when refreshing Librespot: {e},"
-                "retying in 5 seconds..."
+                f"Có lỗi khi tải lại Librespot: {e},"
+                "thử lại trong 5 giây..."
             )
             await asyncio.sleep(5)
             await self.refresh_librespot()
-        logging.info("Librespot session regenerated successfully.")
+        logging.info("Tạo lại phiên Librespot thành công.")
 
 
 class Librespot:
@@ -99,15 +99,15 @@ class Librespot:
         """Wait for credentials and generate a json file if needed."""
         if not path.exists():
             logging.error(
-                "Please log in to Librespot from Spotify's official client! "
-                "Any command using Spotify features will not work."
+                "Vui lòng đăng nhập vào Librespot từ client chính thức của Discord "
+                "Tất cả lệnh liên quan đến Spotify sẽ không dùng được."
             )
             session = await asyncio.to_thread(ZeroconfServer.Builder().create)
             while not path.exists():
                 await asyncio.sleep(1)
             logging.info(
-                'Credentials saved Successfully, closing Zeroconf session. '
-                'You can now close Spotify. ( ^^) _旦~~'
+                'Lưu thông tin thành công , đang đóng phiên Zeroconf. '
+                'Bạn có thể đóng Spotify rồi đó. ( ^^) _旦~~'
             )
             session.close_session()
 
@@ -122,14 +122,14 @@ class Librespot:
             lambda: Session.Builder().stored_file().create()
         )
         self.updated = datetime.now()
-        logging.info('Librespot session created!')
+        logging.info('Đã tạo phiên Librespot')
 
     async def close_session(self):
         """Close the Librespot session gracefully."""
         if self.session:
             await asyncio.to_thread(self.session.close())
             self.session = None
-            logging.info("Librespot session closed.")
+            logging.info("Đã đóng phiên Librespot.")
 
 
 class Spotify:
@@ -176,14 +176,14 @@ class Spotify:
         embed = discord.Embed(
             title=track_name,
             url=track_url,
-            description=f"By {artist_string}",
+            description=f"Bởi {artist_string}",
             color=discord.Colour.from_rgb(*dominant_rgb)
         ).add_field(
-            name="Part of the album",
+            name="Nằm trong album",
             value=f"[{album['name']}]({album_url})",
             inline=True
         ).set_author(
-            name="Now playing"
+            name="Đang phát"
         ).set_thumbnail(
             url=cover_url
         )

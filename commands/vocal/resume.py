@@ -11,20 +11,20 @@ class Resume(commands.Cog):
         session = session_manager.server_sessions.get(ctx.guild.id)
 
         if not session:
-            await ctx.respond('Nothing to resume!')
+            await ctx.respond('Không có gì để tiếp tục!')
             return
 
         voice_client = session.voice_client
 
         if voice_client.is_paused():
             voice_client.resume()
-            await ctx.respond('Resumed!')
+            await ctx.respond('Đã tiếp tục!')
         else:
-            await ctx.respond('The audio is not paused.')
+            await ctx.respond('Âm thành chưa có dừng phát mà.')
 
     @commands.slash_command(
         name='resume',
-        description='Resume the current song.'
+        description='Tiếp tục bài hát hiện tại.'
     )
     async def resume(self, ctx: discord.ApplicationContext) -> None:
         await self.execute_resume(ctx)
