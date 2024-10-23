@@ -42,5 +42,7 @@ if CHATBOT_ENABLED:
                 await message.channel.send(formatted_reply)
                 await chat.post_prompt()
 
-    def setup(bot):
-        bot.add_cog(Chatbot(bot))
+# Changed to async setup function
+async def setup(bot):
+    if CHATBOT_ENABLED:
+        await bot.add_cog(Chatbot(bot))
