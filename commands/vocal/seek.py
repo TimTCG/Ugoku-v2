@@ -11,7 +11,7 @@ class Seek(commands.Cog):
 
     @commands.slash_command(
         name='seek',
-        description='Seek to a certain position in the current song (in seconds).'
+        description='Tua đến vị trí bất kỳ trong bài hát hiện tại (giây).'
     )
     async def seek(
         self,
@@ -22,14 +22,14 @@ class Seek(commands.Cog):
         session: ServerSession | None = sm.server_sessions.get(guild_id)
 
         if not session:
-            await ctx.respond("No active session!")
+            await ctx.respond("Không có phiên hoạt động!")
             return
 
         if not session.queue:
-            await ctx.respond("No song in queue!")
+            await ctx.respond("Không có bài hát trong hàng chờ!")
             return
 
-        await ctx.respond(f"Seeking to {position} seconds.")
+        await ctx.respond(f"Đang tua đến {position} giây.")
         await session.seek(position, quiet=True)
 
 

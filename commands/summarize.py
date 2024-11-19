@@ -13,7 +13,7 @@ if CHATBOT_ENABLED:
 
         @commands.slash_command(
             name='summarize',
-            description='Summarize a given text, an audio file or a Youtube video.'
+            description='Tóm tắt một đoạn văn bản, một file âm thanh, hoặc một video YouTube.'
         )
         async def summarize(
             self,
@@ -25,10 +25,10 @@ if CHATBOT_ENABLED:
             )  # type: ignore
         ) -> None:
             if not CHATBOT_ENABLED or not ctx.guild.id in CHATBOT_WHITELIST:
-                await ctx.respond('Summaries are not available in your server~')
+                await ctx.respond('Tóm tắt không khả dụng trong máy chủ của bạn~')
                 return
 
-            await ctx.respond('Give me a second~')
+            await ctx.respond('Chờ mình một lát nhé~')
             if type == 'Youtube video':
                 query = await Summaries.get_youtube_transcript_text(url=query)
 
@@ -36,7 +36,7 @@ if CHATBOT_ENABLED:
             text = await Summaries.summarize(query)
             if not text:
                 await ctx.edit(
-                    content='An error occured during the summary genetation!')
+                    content='Có lỗi xảy ra thì tạo bản tóm tắt!')
 
             # Prepare the embed
             # ...

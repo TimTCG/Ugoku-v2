@@ -140,9 +140,7 @@ class Memory:
             include_metadata=True
         )
         rec = [match['metadata'].get('text') for match in results['matches']]
-        if rec:
-            rec_string = ', '.join(str(recall).replace('\n', '')
-                                   for recall in rec)
+        rec_string = ', '.join(str(recall).replace('\n', '') for recall in rec)
 
         return rec_string
 

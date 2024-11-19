@@ -10,7 +10,7 @@ class Queue(commands.Cog):
 
     @commands.slash_command(
         name='queue',
-        description='Hiển thị hàng chờ.'
+        description='Hiển thị hàng chờ hiện tại.'
     )
     async def queue(self, ctx: discord.ApplicationContext):
         guild_id = ctx.guild.id

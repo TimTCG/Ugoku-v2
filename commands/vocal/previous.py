@@ -22,7 +22,7 @@ class Previous(commands.Cog):
         if not session:
             await send_response(
                 respond,
-                "No active sessions!",
+                "Không có phiên hoạt động",
                 guild_id
             )
             return
@@ -30,21 +30,21 @@ class Previous(commands.Cog):
         if not session.stack_previous:
             await send_response(
                 respond,
-                "No tracks played previously!",
+                "Không có bài hát nào phát trước đó!",
                 guild_id
             )
             return
 
         await send_response(
             respond,
-            "Playing the previous track!",
+            "Đang phát bài hát trước!",
             guild_id
         )
         await session.play_previous(ctx)
 
     @commands.slash_command(
         name='previous',
-        description='Play the previous track.'
+        description='Phát bài hát trước.'
     )
     async def previous(self, ctx: discord.ApplicationContext) -> None:
         await self.execute_previous(ctx)

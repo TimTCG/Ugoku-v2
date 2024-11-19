@@ -125,15 +125,15 @@ class ServerSession:
                 next_track = (
                     f'[{next_track_info["display_name"]}](<{next_track_info["url"]}>)')
             else:
-                next_track = 'End of queue!'
+                next_track = 'Kết thúc hàng chờ!'
             # Update the embed with remaining tracks
             embed.add_field(
-                name="Remaining Tracks",
+                name="Bài hát còn lại",
                 value=str(len(self.queue) - 1),
                 inline=True
             )
             embed.add_field(
-                name="Next",
+                name="Tiếp theo",
                 value=next_track, inline=True
             )
             # No need for a text message if embed
@@ -143,7 +143,7 @@ class ServerSession:
             view = controlView(self.bot, ctx, self.voice_client)
 
         else:
-            message = f'Now playing: {title_markdown}'
+            message = f'Đang phát: {title_markdown}'
             view = None
 
         # Send the message or edit the previous message based on the context
@@ -288,7 +288,7 @@ class ServerSession:
         if len(tracks_info) == 1:
             title = tracks_info[0]['display_name']
             url = tracks_info[0]['url']
-            await edit(content=f'Added to queue: [{title}](<{url}>) !')
+            await edit(content=f'Đã thêm vào hàng chờ: [{title}](<{url}>) !')
 
         # If 2 or 3 songs are added
         elif len(tracks_info) in [2, 3]:
@@ -296,7 +296,7 @@ class ServerSession:
                 f'[{track_info["display_name"]}](<{track_info["url"]}>)'
                 for track_info in tracks_info
             )
-            await edit(content=f'Added to queue: {titles_urls} !')
+            await edit(content=f'Đã thêm vào hàng chờ: {titles_urls} !')
 
         # If more than 3 songs are added
         elif len(tracks_info) > 3:
@@ -307,8 +307,8 @@ class ServerSession:
             additional_songs = len(tracks_info) - 3
             await edit(
                 content=(
-                    f'Added to queue: {titles_urls}, and '
-                    f'{additional_songs} more song(s) !')
+                    f'Đã thêm vào hàng chờ: {titles_urls}, và '
+                    f'{additional_songs} bài hát !')
             )
 
         if not self.voice_client.is_playing() and len(self.queue) >= 1:
@@ -462,15 +462,15 @@ class ServerSession:
         if mode == 'noLoop':
             self.loop_current = False
             self.loop_queue = False
-            response = 'You are not looping anymore.'
+            response = 'Bạn đang không lặp lại nữa!'
         elif mode == 'loopAll':
             self.loop_current = False
             self.loop_queue = True
-            response = 'You are now looping the queue!'
+            response = 'Bạn đang lặp lại hàng chờ!'
         elif mode == 'loopOne':
             self.loop_current = True
             self.loop_queue = False
-            response = 'You are now looping the current song!'
+            response = 'Bạn đang lặp lại bài hát hiện tại!'
         else:
             return False
 

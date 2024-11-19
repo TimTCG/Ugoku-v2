@@ -24,7 +24,7 @@ class Loop(commands.Cog):
         if not session:
             await send_response(
                 respond,
-                "Ugoku is not connected to any VC!",
+                "Kohane chưa được kết nối vào kênh thoại!",
                 guild_id
             )
             return
@@ -34,9 +34,9 @@ class Loop(commands.Cog):
         if mode == 'song':
             session.loop_current = not session.loop_current
             response = (
-                "You are now looping the current song!"
+                "Bạn đang lặp lại bài hát hiện tại!"
                 if session.loop_current
-                else "You are not looping the current song anymore."
+                else "Bạn đang không lặp lại bài hát hiện tại."
             )
 
         elif mode == 'queue':
@@ -44,10 +44,10 @@ class Loop(commands.Cog):
 
             if session.loop_queue:
                 session.loop_current = False
-                response = "You are now looping the queue!"
+                response = "Bạn đang lặp lại hàng chờ hiện tại!"
             else:
                 session.to_loop.clear()
-                response = "You are not looping the queue anymore."
+                response = "Bạn đang không lặp lại hàng chờ hiện tại."
 
         else:
             response = "oi"
@@ -56,7 +56,7 @@ class Loop(commands.Cog):
 
     @commands.slash_command(
         name='loop',
-        description='Loop/Unloop what you are listening to in VC.'
+        description='Lặp lại/Không lặp lại những gì bạn đang nghe trong kênh thoại.'
     )
     async def loop(
         self,

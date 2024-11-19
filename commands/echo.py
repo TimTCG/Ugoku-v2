@@ -10,7 +10,7 @@ class Echo(commands.Cog):
 
     @discord.slash_command(
         name='echo',
-        description='Echo any message !',
+        description='Phát lại tin nhắn bất kỳ !',
         integration_types={
             discord.IntegrationType.guild_install,
             discord.IntegrationType.user_install,
@@ -28,7 +28,7 @@ class Echo(commands.Cog):
             await ctx.respond(content=message)
         else:
             await ctx.send(content=message)
-            await ctx.respond('Done !', ephemeral=True)
+            await ctx.respond('Xong !', ephemeral=True)
 
 
 def setup(bot):

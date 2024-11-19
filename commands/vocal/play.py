@@ -35,10 +35,10 @@ class Play(commands.Cog):
         # Connect to the voice channel
         session: Optional[ServerSession] = await sm.connect(ctx, self.bot)
         if not session:
-            await respond('You are not in a voice channel!')
+            await respond('Bạn đang không ở trong kênh thoại!')
             return
 
-        await send_response(respond, "Give me a second~", session.guild_id)
+        await send_response(respond, "Chờ mình một lát nhé~", session.guild_id)
 
         source = source.lower()
         youtube_domains = ['youtube.com', 'www.youtube.com', 'youtu.be']
@@ -63,7 +63,7 @@ class Play(commands.Cog):
         elif source == 'spotify':
             if not SPOTIFY_ENABLED:
                 await edit(
-                    content=('Spotify features are not enabled.')
+                    content=('Tính năng Spotify chưa được bật.')
                 )
                 return
 
@@ -74,7 +74,7 @@ class Play(commands.Cog):
 
     @commands.slash_command(
         name='play',
-        description='Select a song to play.'
+        description='Chọn một bài hát bất kỳ để phát.'
     )
     async def play(
         self,

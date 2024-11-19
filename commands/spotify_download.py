@@ -17,7 +17,7 @@ class SpotifyDownload(commands.Cog):
 
     @commands.slash_command(
         name='spdl',
-        description='Download songs from Spotify.',
+        description='Tải nhạc từ Spotify.',
         integration_types={
             discord.IntegrationType.guild_install,
             discord.IntegrationType.user_install,
@@ -30,11 +30,11 @@ class SpotifyDownload(commands.Cog):
         quality: discord.Option(
             str,
             choices=[
-                'High (OGG 320kbps)',
-                'Normal (OGG 160kbps)',
-                'Low (OGG 96kbps)'
+                'Cao (OGG 320kbps)',
+                'Trung bình (OGG 160kbps)',
+                'Thấp (OGG 96kbps)'
             ],
-            default='High (OGG 320kbps)'
+            default='Cao (OGG 320kbps)'
         )  # type: ignore
     ) -> None:
         # The following is a proof of concept code~
@@ -43,16 +43,16 @@ class SpotifyDownload(commands.Cog):
         # - Add messages context
 
         if not SPOTIFY_ENABLED:
-            await ctx.respond(content='Spotify features are not enabled.')
+            await ctx.respond(content='Các tính năng Spotify chưa được bật.')
             return
 
-        await ctx.respond('Give me a second~')
+        await ctx.respond('Chờ mình một lát nha~')
 
         # Quality dict
         quality_dict = {
-            'High (OGG 320kbps)': AudioQuality.VERY_HIGH,
-            'Normal (OGG 160kbps)': AudioQuality.HIGH,
-            'Low (OGG 96kbps)': AudioQuality.NORMAL
+            'Cao (OGG 320kbps)': AudioQuality.VERY_HIGH,
+            'Trung bình (OGG 160kbps)': AudioQuality.HIGH,
+            'Thấp (OGG 96kbps)': AudioQuality.NORMAL
         }
 
         self.bot.downloading = True
@@ -63,7 +63,7 @@ class SpotifyDownload(commands.Cog):
                 aq=quality_dict[quality]
             )
             if not tracks:
-                await ctx.edit(content="No track has been found!")
+                await ctx.edit(content="Không tìm thấy bài hát!")
                 return
             # TO CHANGE, only get the first track
             track = tracks[0]
@@ -101,7 +101,7 @@ class SpotifyDownload(commands.Cog):
 
             if size < ctx.guild.filesize_limit:
                 await ctx.edit(
-                    content="Here you go!",
+                    content="Của bạn đây!",
                     file=discord.File(
                         file_path,
                         f"{track['display_name']}.ogg",
@@ -109,8 +109,8 @@ class SpotifyDownload(commands.Cog):
                 )
             else:
                 await ctx.edit(
-                    content=f"The download of {track['display_name']} "
-                    'failed: file too big.'
+                    content=f"Tải xuống {track['display_name']} "
+                    'thất bại: tệp quá lớn.'
                 )
         finally:
             self.bot.downloading = False

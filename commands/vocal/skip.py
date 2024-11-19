@@ -24,7 +24,7 @@ class Skip(commands.Cog):
         if guild_id not in sm.server_sessions:
             await send_response(
                 respond,
-                "No songs in queue!",
+                "Không có bài hát trong hàng chờ!",
                 session.guild_id
             )
             return
@@ -34,12 +34,12 @@ class Skip(commands.Cog):
         if not session.queue:
             await send_response(
                 respond,
-                "No songs in queue!",
+                "Không có bài hát trong hàng chờ!",
                 session.guild_id
             )
             return
 
-        await send_response(respond, "Skipping!", session.guild_id)
+        await send_response(respond, "Đang bỏ qua!", session.guild_id)
 
         # SKIP
         session.skipped = True
@@ -56,7 +56,7 @@ class Skip(commands.Cog):
 
     @commands.slash_command(
         name='skip',
-        description='Skip the current song.'
+        description='Bỏ qua bài hát hiện tại.'
     )
     async def skip(self, ctx: discord.ApplicationContext) -> None:
         await self.execute_skip(ctx)

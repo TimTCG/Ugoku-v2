@@ -23,7 +23,7 @@ class Shuffle(commands.Cog):
         if not session:
             await send_response(
                 respond,
-                "You are not in a voice channel!",
+                "Bạn đang không ở trong kênh thoại!",
                 guild_id
             )
             return
@@ -31,15 +31,15 @@ class Shuffle(commands.Cog):
         session.shuffle_queue()
 
         if session.shuffle:
-            response_message = "Queue shuffled!"
+            response_message = "Đã xáo trộn hàng chờ!"
         else:
-            response_message = "Original queue order restored."
+            response_message = "Đã khôi phục thứ tự hàng chờ."
 
         await send_response(respond, response_message, guild_id)
 
     @commands.slash_command(
         name='shuffle',
-        description='Shuffle the queue.'
+        description='Xáo trộn hàng chờ.'
     )
     async def shuffle(
         self,

@@ -159,7 +159,7 @@ async def play_onsei(
         dominant_rgb = await get_dominant_rgb_from_url(cover_url)
     except ClientResponseError as e:
         if e.status == 404:
-            await ctx.edit(content='No onsei has been found!')
+            await ctx.edit(content='Không tìm thấy onsei!')
             return
         else:
             await ctx.edit(content=f'An error occurred: {e.message}')
@@ -214,11 +214,11 @@ async def play_youtube(
     try:
         tracks_info = await ctx.bot.youtube.get_track_info(query)
     except DownloadError as e:
-        await edit(content='Download failed: Ugoku has been detected as a bot.')
+        await edit(content='Tải xuống thất bại! Kohane đã bị phát hiện là bot.')
         return
 
     if not tracks_info:
-        await edit(content='No video has been found!')
+        await edit(content='Không tìm thấy video!')
         return
 
     await session.add_to_queue(ctx, [tracks_info], 'Youtube', interaction)

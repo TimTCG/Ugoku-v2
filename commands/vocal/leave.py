@@ -9,14 +9,14 @@ class Leave(commands.Cog):
 
     @commands.slash_command(
         name='leave',
-        description='Đừng màaaaaaaaaaaa （＞人＜；）'
+        description='Đừng màaaaaaaaaa （＞人＜；）'
     )
     async def leave(self, ctx: discord.ApplicationContext) -> None:
         guild_id = ctx.guild.id
         session = sm.server_sessions.get(guild_id)
 
         if session:
-            await ctx.respond('Chào nhaaaaa~')
+            await ctx.respond('Chào nhaaa~')
             voice_client: discord.VoiceClient = session.voice_client
             await voice_client.disconnect()
             voice_client.cleanup()

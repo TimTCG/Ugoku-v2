@@ -16,7 +16,7 @@ class controlView(discord.ui.View):
         self.voice_client = voice_client
 
     @discord.ui.button(
-        label="Pause/Resume",
+        label="Tạm dừng/Tiếp tục",
         style=discord.ButtonStyle.secondary,
     )
     async def pause_button_callback(
@@ -38,7 +38,7 @@ class controlView(discord.ui.View):
             await resume_cog.execute_resume(self.ctx, send=True)
 
     @discord.ui.button(
-        label="Play previous",
+        label="Phát bài trước",
         style=discord.ButtonStyle.secondary,
     )
     async def previous_button_callback(
@@ -52,7 +52,7 @@ class controlView(discord.ui.View):
         await previous_cog.execute_previous(self.ctx, send=True)
 
     @discord.ui.button(
-        label="Skip",
+        label="Bỏ qua",
         style=discord.ButtonStyle.secondary,
     )
     async def skip_button_callback(
@@ -66,7 +66,7 @@ class controlView(discord.ui.View):
         await skip_cog.execute_skip(self.ctx, send=True)
 
     @discord.ui.button(
-        label="Loop song",
+        label="Lặp lại",
         style=discord.ButtonStyle.secondary,
     )
     async def loop_button_callback(
@@ -80,7 +80,7 @@ class controlView(discord.ui.View):
         await loop_cog.execute_loop(self.ctx, 'Song', send=True)
 
     @discord.ui.button(
-        label="Shuffle",
+        label="Xáo trộn",
         style=discord.ButtonStyle.secondary,
     )
     async def shuffle_button_callback(

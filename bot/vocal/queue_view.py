@@ -55,7 +55,7 @@ class QueueView(View):
             self.queue) < self.page * self.max_per_page
 
     @discord.ui.button(
-        label="Previous",
+        label="Trước",
         style=discord.ButtonStyle.secondary
     )
     async def previous_button(
@@ -74,7 +74,7 @@ class QueueView(View):
         await self.update_view(interaction)
 
     @discord.ui.button(
-        label="Next",
+        label="Tiếp theo",
         style=discord.ButtonStyle.secondary
     )
     async def next_button(
@@ -128,9 +128,9 @@ class QueueView(View):
         """
         if not self.queue:
             embed = discord.Embed(
-                title='Queue Overview',
+                title='Tổng quan hàng chờ',
                 color=discord.Colour.from_rgb(*DEFAULT_EMBED_COLOR),
-                description='No songs in queue!'
+                description='Không có bài hát trong hàng chờ!'
             )
             return embed
 
@@ -154,7 +154,7 @@ class QueueView(View):
 
         # Create the embed
         embed = discord.Embed(
-            title="Queue Overview",
+            title="Tổng quan hàng chờ",
             thumbnail=cover_data['url'],
             color=discord.Color.from_rgb(*cover_data['dominant_rgb'])
         )
@@ -177,7 +177,7 @@ class QueueView(View):
 
         embed.add_field(
             # Now playing + time indication
-            name=f"Now Playing - {time_string}",
+            name=f"Đang phát - {time_string}",
             value=f"[{title}]({url})",
             inline=False
         )
@@ -206,7 +206,7 @@ class QueueView(View):
                 for i in range(start_index, end_index)
             )
             embed.add_field(
-                name="Songs in Loop",
+                name="Bài hát đang lặp lại",
                 value=loop_details,
                 inline=False
             )

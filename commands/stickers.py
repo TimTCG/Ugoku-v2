@@ -13,7 +13,7 @@ class Stickers(commands.Cog):
 
     @commands.slash_command(
         name='get-stickers',
-        description='Download a LINE sticker pack from a given URL.',
+        description='Tải một bộ nhãn dán từ Line.',
         integration_types={
             discord.IntegrationType.guild_install,
             discord.IntegrationType.user_install
@@ -27,21 +27,21 @@ class Stickers(commands.Cog):
             required=True
         )  # type: ignore
     ) -> None:
-        await ctx.respond('Give me a second~')
+        await ctx.respond('Chờ mình một lát nha~')
 
         try:
             zip_file = await get_stickerpack(url, ctx=ctx)
         except IncorrectURL:
             await ctx.edit(
-                content="Invalid URL! Please check the URL and try again."
-                "\nExample: "
+                content="URL không hợp lệ. Hãy kiểm tra và thử lại nhé."
+                "\nVí dụ: "
                 "https://store.line.me/stickershop/product/20347097/en"
                 )
             return
 
         await ctx.edit(
             file=discord.File(zip_file),
-            content="Here's the sticker pack you requested~"
+            content="Bộ nhãn dán mà bạn yêu cầu đây nha~"
         )
         # Clean up the file after sending
         os.remove(zip_file)

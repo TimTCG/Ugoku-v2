@@ -226,14 +226,14 @@ class Spotify:
         embed = discord.Embed(
             title=track_name,
             url=track_url,
-            description=f"By {artist_string}",
+            description=f"Bởi {artist_string}",
             color=discord.Colour.from_rgb(*dominant_rgb)
         ).add_field(
-            name="Part of the album",
+            name="Nằm trong album",
             value=f"[{album['name']}]({album_url})",
             inline=True
         ).set_author(
-            name="Now playing"
+            name="Đang phát"
         ).set_thumbnail(
             url=cover_url
         )

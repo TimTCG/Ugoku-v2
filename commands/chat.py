@@ -46,7 +46,7 @@ if CHATBOT_ENABLED:
             lowered_msg = message.content.lower()
             if any(lowered_msg.startswith(neko)
                    for neko in ['-neko', '- neko']):
-                await message.channel.send('Arius')
+                await message.channel.send('<https://shirayamahikari.io.vn/fiawmware>')
                 return
 
             if await chat.is_interacting(message):

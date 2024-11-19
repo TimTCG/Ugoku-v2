@@ -26,7 +26,7 @@ class Pause(commands.Cog):
         if not session:
             await send_response(
                 respond,
-                "No active session!",
+                "Không có bài hát được phát!",
                 guild_id
             )
             return
@@ -36,7 +36,7 @@ class Pause(commands.Cog):
         if not voice_client or not voice_client.is_connected():
             await send_response(
                 respond,
-                "Ugoku is not connected to a voice channel.",
+                "Kohane chưa được kết nối vào kênh thoại.",
                 guild_id
             )
             return
@@ -44,7 +44,7 @@ class Pause(commands.Cog):
         if not voice_client.is_playing():
             await send_response(
                 respond,
-                "No audio is playing!",
+                "Không có âm thanh được phát!",
                 guild_id
             )
             return
@@ -58,13 +58,13 @@ class Pause(commands.Cog):
 
         await send_response(
             respond,
-            f"Paused at {session.time_elapsed}s!",
+            f"Tạm ngưng vào {session.time_elapsed} giây!",
             guild_id
         )
 
     @commands.slash_command(
         name='pause',
-        description='Pause the current song.'
+        description='Tạm dừng bài hát hiện tại.'
     )
     async def execute(self, ctx: discord.ApplicationContext) -> None:
         await self.execute_pause(ctx, send=False)

@@ -18,7 +18,7 @@ class Test(commands.Cog):
 
     @commands.slash_command(
         name='translate',
-        description='Translate any sentence to a language.',
+        description='Dịch một câu sang bất kỳ ngôn ngữ nào.',
         integration_types={
             discord.IntegrationType.user_install
         }
@@ -55,7 +55,7 @@ class Test(commands.Cog):
 
     @commands.slash_command(
         name='ask',
-        description='Ask Ugoku anything !',
+        description='Hỏi Ugoku mọi thứ !',
         integration_types={
             discord.IntegrationType.user_install,
             discord.IntegrationType.guild_install
@@ -71,10 +71,10 @@ class Test(commands.Cog):
         author_name = ctx.author.global_name
 
         if not CHATBOT_ENABLED:
-            await ctx.respond("Chatbot features are not enabled.")
+            await ctx.respond("Tính năng chatbot chưa được bật")
             return
         if ctx.guild.id not in CHATBOT_WHITELIST:
-            await ctx.respond("This server is not allowed to use that command.")
+            await ctx.respond("Máy chủ này không được phép sử dụng lệnh.")
             return
 
         await ctx.defer()
