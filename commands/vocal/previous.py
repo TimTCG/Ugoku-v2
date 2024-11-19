@@ -3,6 +3,7 @@ from discord.ext import commands
 from bot.vocal.session_manager import session_manager as sm
 
 from bot.vocal.server_session import *
+from bot.utils import send_response
 
 
 class Previous(commands.Cog):
@@ -11,28 +12,43 @@ class Previous(commands.Cog):
 
     async def execute_previous(
         self,
-        ctx: discord.ApplicationContext
+        ctx: discord.ApplicationContext,
+        send: bool = False
     ) -> None:
-        guild_id = ctx.guild.id
-        session = sm.server_sessions.get(guild_id)
+        guild_id: int = ctx.guild.id
+        session: Optional[ServerSession] = sm.server_sessions.get(guild_id)
+        respond = (ctx.send if send else ctx.respond)
 
-        if session is None:
-            await ctx.respond('Không có phiên hoạt động')
+        if not session:
+            await send_response(
+                respond,
+                "No active sessions!",
+                guild_id
+            )
             return
 
         if not session.stack_previous:
-            await ctx.respond("Không có bài hát nào phát trước đó!")
+            await send_response(
+                respond,
+                "No tracks played previously!",
+                guild_id
+            )
             return
 
-        await ctx.respond('Đang phát bài hát trước đó!')
+        await send_response(
+            respond,
+            "Playing the previous track!",
+            guild_id
+        )
         await session.play_previous(ctx)
 
     @commands.slash_command(
         name='previous',
-        description='Phát bài hát trước đó.'
+        description='Play the previous track.'
     )
     async def previous(self, ctx: discord.ApplicationContext) -> None:
         await self.execute_previous(ctx)
+
 
 def setup(bot):
     bot.add_cog(Previous(bot))

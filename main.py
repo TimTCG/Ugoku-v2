@@ -1,19 +1,25 @@
+from bot.vocal.youtube import Youtube
+import api.api as api
+from config import COMMANDS_FOLDER, SPOTIFY_ENABLED, CHATBOT_ENABLED
+import discord
 import os
 import logging
 import asyncio
-from config import COMMANDS_FOLDER, SPOTIFY_ENABLED
-import api
-
-import discord
 from dotenv import load_dotenv
+
+load_dotenv()
+
 
 if SPOTIFY_ENABLED:
     from bot.vocal.spotify import SpotifySessions, Spotify
 
+if CHATBOT_ENABLED:
+    from bot.chatbot.vector_recall import Memory
+
+
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
-# DEV_TOKEN = os.getenv('DEV_TOKEN')
-logger = logging.getLogger(__name__)
+DEV_TOKEN = os.getenv('DEV_TOKEN')
 
 
 # Init bot
@@ -25,7 +31,7 @@ server = api.server
 api.bot = bot
 
 
-@bot.event 
+@bot.event
 async def on_ready() -> None:
     logging.info(f"{bot.user} đang chạy !")
     if SPOTIFY_ENABLED:
@@ -34,6 +40,8 @@ async def on_ready() -> None:
         spotify = Spotify(spotify_sessions)
         bot.spotify = spotify
         bot.downloading = False
+    bot.youtube = Youtube()
+
 
 for filepath in COMMANDS_FOLDER.rglob('*.py'):
     relative_path = filepath.relative_to(COMMANDS_FOLDER).with_suffix('')
@@ -42,8 +50,9 @@ for filepath in COMMANDS_FOLDER.rglob('*.py'):
     logging.info(f'Loading {module_name}')
     bot.load_extension(module_name)
 
+
 async def start() -> None:
-    await asyncio.gather(bot.start(BOT_TOKEN), server.serve())
+    await asyncio.gather(bot.start(DEV_TOKEN), server.serve())
 
 try:
     loop.run_until_complete(start())

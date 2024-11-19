@@ -7,10 +7,11 @@ from typing import Optional, Callable, List, Literal
 import discord
 from librespot.audio import AbsChunkedInputStream
 
-from bot.utils import update_active_servers
+from api.update_active_servers import update_active_servers
 from bot.vocal.queue_view import QueueView
+from bot.vocal.control_view import controlView
 from bot.vocal.types import QueueItem, TrackInfo, LoopMode, SimplifiedTrackInfo
-from config import AUTO_LEAVE_DURATION
+from config import AUTO_LEAVE_DURATION, DEFAULT_AUDIO_VOLUME
 
 from typing import TYPE_CHECKING
 
@@ -54,13 +55,14 @@ class ServerSession:
         bot: discord.Bot,
         channel_id: int,
         session_manager: 'SessionManager'
-    ):
+    ) -> None:
         self.bot = bot
         self.guild_id = guild_id
         self.voice_client = voice_client
         self.queue: List[QueueItem] = []
         self.to_loop: List[QueueItem] = []
         self.last_played_time = datetime.now()
+        self.time_elapsed = 0
         self.loop_current = False
         self.loop_queue = False
         self.skipped = False
@@ -68,7 +70,7 @@ class ServerSession:
         self.original_queue: List[QueueItem] = []
         self.shuffled_queue: List[QueueItem] = []
         self.previous = False
-        self.stack_previous = []  # Im not sure what type is this :kanna_sus:
+        self.stack_previous = []
         self.is_seeking = False
         self.channel_id = channel_id
         self.session_manager = session_manager
@@ -77,18 +79,25 @@ class ServerSession:
         )
         self.playback_start_time = None
         self.last_context = None
-        self.volume = 100
+        self.volume = DEFAULT_AUDIO_VOLUME
 
     async def display_queue(
         self,
         ctx: discord.ApplicationContext
     ) -> None:
-        """Displays the current queue using a QueueView.
+        """Displays the current queue.
 
         Args:
             ctx: The Discord application context.
         """
-        view = QueueView(self.queue, self.to_loop, self.bot)
+        view = QueueView(
+            self.queue,
+            self.to_loop,
+            self.bot,
+            self.last_played_time,
+            self.time_elapsed,
+            self.voice_client.is_playing()
+        )
         await view.display(ctx)
 
     async def send_now_playing(
@@ -131,83 +140,6 @@ class ServerSession:
             message = ''
 
             # VIEW (buttons)
-            class controlView(discord.ui.View):
-                def __init__(
-                    self,
-                    bot: discord.bot,
-                    ctx: discord.ApplicationContext,
-                    voice_client: discord.voice_client
-                ) -> None:
-                    super().__init__(timeout=None)
-                    self.bot = bot
-                    self.ctx = ctx
-                    self.voice_client = voice_client
-
-                @discord.ui.button(
-                    label="Pause/Resume",
-                    style=discord.ButtonStyle.secondary,
-                )
-                async def pause_button_callback(
-                    self,
-                    button: discord.ui.Button,
-                    interaction: discord.Interaction
-                ) -> None:
-                    # To avoid "interaction failed message"
-                    await interaction.response.defer()
-
-                    # Pause if audio is playing
-                    if self.voice_client.is_playing():
-                        pause_cog = self.bot.get_cog('Pause')
-                        await pause_cog.execute_pause(ctx)
-
-                    # Resume if audio is paused
-                    else:
-                        resume_cog = self.bot.get_cog('Resume')
-                        await resume_cog.execute_resume(ctx)
-
-                @discord.ui.button(
-                    label="Play previous",
-                    style=discord.ButtonStyle.secondary,
-                )
-                async def previous_button_callback(
-                    self,
-                    button: discord.ui.Button,
-                    interaction: discord.Interaction
-                ) -> None:
-                    await interaction.response.defer()
-
-                    previous_cog = self.bot.get_cog('Previous')
-                    await previous_cog.execute_previous(ctx)
-
-                @discord.ui.button(
-                    label="Skip",
-                    style=discord.ButtonStyle.secondary,
-                )
-                async def skip_button_callback(
-                    self,
-                    button: discord.ui.Button,
-                    interaction: discord.Interaction
-                ) -> None:
-                    await interaction.response.defer()
-
-                    skip_cog = self.bot.get_cog('Skip')
-                    await skip_cog.execute_skip(ctx)
-                    
-                @discord.ui.button(
-                    label="Loop song",
-                    style=discord.ButtonStyle.secondary,
-                )
-                async def loop_button_callback(
-                    self,
-                    button: discord.ui.Button,
-                    interaction: discord.Interaction
-                ) -> None:
-                    await interaction.response.defer()
-
-                    loop_cog = self.bot.get_cog('Loop')
-                    await loop_cog.execute_loop(ctx, 'Song')
-
-
             view = controlView(self.bot, ctx, self.voice_client)
 
         else:
@@ -215,9 +147,18 @@ class ServerSession:
             view = None
 
         # Send the message or edit the previous message based on the context
-        await ctx.send(content=message, embed=embed, view=view)
+        await ctx.send(
+            content=message,
+            embed=embed,
+            view=view,
+            silent=True
+        )
 
-    async def seek(self, position: int) -> bool:
+    async def seek(
+        self,
+        position: int,
+        quiet: bool = False
+    ) -> bool:
         """Seeks to a specific position in the current track.
 
         Args:
@@ -226,27 +167,28 @@ class ServerSession:
         Returns:
             bool: True if seeking was successful, False otherwise.
         """
+        # No audio is playing
         if not self.voice_client or not self.voice_client.is_playing():
             return False
 
-        # Flag to indicate that the player is seeking
         self.is_seeking = True
-        # Stop the current playback
+        self.time_elapsed = position
         self.voice_client.stop()
 
         # Wait a short time to ensure the stop has been processed
         await asyncio.sleep(0.1)
 
-        # Send "Seeking" message
-        if self.last_context:
+        if not quiet and self.last_context:
             await self.last_context.send(f"Seeking to {position} seconds")
 
-        # Use start_playing with the new position
         await self.start_playing(self.last_context, start_position=position)
-
         return True
 
-    async def start_playing(self, ctx: discord.ApplicationContext, start_position: int = 0) -> None:
+    async def start_playing(
+        self,
+        ctx: discord.ApplicationContext,
+        start_position: int = 0
+    ) -> None:
         """Handles the playback of the next track in the queue.
 
         Args:
@@ -260,32 +202,22 @@ class ServerSession:
             return  # No songs to play
 
         source = self.queue[0]['track_info']['source']
+
         # If source is a stream generator
         if isinstance(source, Callable):
             source = await source()  # Generate a fresh stream
             source.seek(167)  # Skip the non-audio content
 
-        # Set up FFmpeg options for seeking
-        # ffmpeg_options = {
-        #     'options': f'-vn -ss {start_position} -af aresample=async=1 -ar 44100 -acodec pcm_s16le -ac 2'
-        # }
-
-        # ffmpeg_source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(
-        #     source,
-        #     pipe=isinstance(source, AbsChunkedInputStream),
-        #     **ffmpeg_options
-        # ))
-
-        # # Set the volume
-        # ffmpeg_source.volume = self.volume / 100
-
-        # That would be cool if we could have 2 modes, like one with volume controls,
-        # the other with a better audio quality :11:
+        # Set up FFmpeg options for seeking and volume
+        ffmpeg_options = {
+            'options': f'-ss {start_position} -filter:a "volume={self.volume / 100}"'
+        }
 
         ffmpeg_source = discord.FFmpegOpusAudio(
             source,
             pipe=isinstance(source, AbsChunkedInputStream),
-            bitrate=510
+            bitrate=510,
+            **ffmpeg_options
         )
 
         self.voice_client.play(
@@ -293,7 +225,10 @@ class ServerSession:
             after=lambda e=None: self.after_playing(ctx, e)
         )
 
-        self.playback_start_time = datetime.now().isoformat()
+        self.time_elapsed = start_position
+        now = datetime.now()
+        self.playback_start_time = now.isoformat()
+        self.last_played_time = now
         await update_active_servers(
             self.bot,
             self.session_manager.server_sessions
@@ -317,7 +252,7 @@ class ServerSession:
         self,
         ctx: discord.ApplicationContext,
         tracks_info: List[TrackInfo],
-        source: Literal['Spotify', 'Custom', 'Onsei'],
+        source: Literal['Spotify', 'Youtube', 'Custom', 'Onsei'],
         interaction: Optional[discord.Interaction] = None
     ) -> None:
         """Adds tracks to the queue and starts playback if not already playing.
@@ -325,7 +260,7 @@ class ServerSession:
         Args:
             ctx: The Discord application context.
             tracks_info: A list of track information dictionaries.
-            source: The source of the tracks ('Spotify', 'Custom', or 'Onsei').
+            source: The source of the tracks ('Spotify', 'Youtube', 'Custom', or 'Onsei').
             interaction: A discord interaction if that method has been triggered by one.
         """
         # Check if triggered by an interaction
@@ -344,11 +279,10 @@ class ServerSession:
             self.original_queue.append(queue_item)
 
         if self.shuffle:
-            current_song = self.queue[0] if self.queue else None
-            remaining_songs = self.queue[1:] if current_song else self.queue
+            current_song = [self.queue[0]] if self.queue else []
+            remaining_songs = self.queue[1:]
             random.shuffle(remaining_songs)
-            self.queue = [current_song] + \
-                remaining_songs if current_song else remaining_songs
+            self.queue = current_song + remaining_songs
 
         # If only one song is added
         if len(tracks_info) == 1:
@@ -426,33 +360,30 @@ class ServerSession:
             for track in self.queue
         ]
 
-    async def shuffle_queue(self, is_active: bool) -> bool:
+    def shuffle_queue(self) -> bool:
         """Toggles shuffling of the queue.
-
-        Args:
-            is_active: Boolean indicating whether to activate or deactivate shuffling.
-
         Returns:
             bool: True if the operation was successful, False otherwise.
         """
         if len(self.queue) <= 1:
-            return True  # No need to shuffle if queue has 0 or 1 song
+            self.shuffle = not self.shuffle
+            # No need to shuffle if queue has 0 or 1 song
+            return True
 
         current_song = self.queue[0]
 
-        if is_active and not self.shuffle:
-            self.shuffled_queue = self.queue[1:]
-            random.shuffle(self.shuffled_queue)
-            self.queue = [current_song] + self.shuffled_queue
-            self.shuffle = True
-
-        elif not is_active and self.shuffle:
+        if self.shuffle:
             # Restore the original order
             current_index = self.original_queue.index(current_song)
             self.queue = [current_song] + \
                 self.original_queue[current_index + 1:]
-            self.shuffle = False
 
+        else:
+            self.shuffled_queue = self.queue[1:]
+            random.shuffle(self.shuffled_queue)
+            self.queue = [current_song] + self.shuffled_queue
+
+        self.shuffle = not self.shuffle
         return True
 
     def after_playing(
@@ -488,7 +419,6 @@ class ServerSession:
         Args:
             ctx: The Discord application context.
         """
-        # Playing previous track ? :kanna_sus:
         if self.queue and not self.loop_current and not self.previous:
             self.stack_previous.append(self.queue[0])
 
@@ -559,7 +489,7 @@ class ServerSession:
                 time_until_disconnect = timedelta(
                     seconds=AUTO_LEAVE_DURATION) - time_since_last_played
 
-                logging.info(
+                logging.debug(
                     'Time until disconnect due to '
                     f'inactivity in {self.guild_id}: '
                     f'{time_until_disconnect}'

@@ -78,9 +78,16 @@ async def get_stickerpack(
                     features="html.parser"
                 )
                 # Pack name
-                pack_name = raw.find(
-                    'p',
-                    {'data-test': 'sticker-name-title'}
+                pack_name = (
+                    raw.find(
+                        'p',
+                        {'data-test': 'sticker-name-title'}
+                    )
+                    or
+                    raw.find(
+                        'p',
+                        {'data-test': 'emoji-name-title'}
+                    )
                 ).get_text(strip=True)
 
     except Exception as e:
@@ -101,7 +108,9 @@ async def get_stickerpack(
         raise ValueError("Không có sticker được tìm thấy trong trang này.")
 
     # Get sticker type and count
-    sticker_type = stickers[0].get('class', [''])[2]
+    sticker_class = stickers[0].get('class', [''])
+    sticker_type = (sticker_class[-1] if len(sticker_class)>= 3 
+                    else 'emote')
     sticker_count = len(stickers)
 
     # Save the stickers
@@ -114,7 +123,9 @@ async def get_stickerpack(
         for i, sticker in enumerate(stickers):
             preview_link = get_link(sticker['data-preview'])
             file_path = folder_path / f'{i + 1}.png'
-            tasks.append(fetch_sticker_image(session, preview_link, file_path))
+            tasks.append(
+                fetch_sticker_image(session, preview_link, file_path)
+            )
 
         await asyncio.gather(*tasks)
 

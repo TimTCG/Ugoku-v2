@@ -1,5 +1,4 @@
 import asyncio
-from pathlib import Path
 import os
 import logging
 
@@ -17,10 +16,14 @@ class SpotifyDownload(commands.Cog):
         self.bot = bot
 
     @commands.slash_command(
-        name='download',
-        description='Tải bài hát từ Spotify.'
+        name='spdl',
+        description='Download songs from Spotify.',
+        integration_types={
+            discord.IntegrationType.guild_install,
+            discord.IntegrationType.user_install,
+        }
     )
-    async def download(
+    async def spdl(
         self,
         ctx: discord.ApplicationContext,
         query: str,
@@ -40,10 +43,10 @@ class SpotifyDownload(commands.Cog):
         # - Add messages context
 
         if not SPOTIFY_ENABLED:
-            await ctx.respond(content='Các tính năng Spotify hiện chưa được bật.')
+            await ctx.respond(content='Spotify features are not enabled.')
             return
 
-        await ctx.respond('Chờ mình một chút nhaa~')
+        await ctx.respond('Give me a second~')
 
         # Quality dict
         quality_dict = {
@@ -56,11 +59,11 @@ class SpotifyDownload(commands.Cog):
         try:
             # Get the tracks
             tracks = await ctx.bot.spotify.get_tracks(
-                user_input=query,
+                query=query,
                 aq=quality_dict[quality]
             )
             if not tracks:
-                await ctx.edit(content="Không tìm thấy bài hát nào!")
+                await ctx.edit(content="No track has been found!")
                 return
             # TO CHANGE, only get the first track
             track = tracks[0]
@@ -89,7 +92,7 @@ class SpotifyDownload(commands.Cog):
                     )
                 except OggVorbisHeaderError:
                     logging.warning(
-                        f"Không thể đọc toàn bộ header của {file_path}")
+                        f"Unable to read the full header of {file_path}")
 
                 size = len(data)
 
@@ -97,7 +100,8 @@ class SpotifyDownload(commands.Cog):
                 size = os.path.getsize(file_path)
 
             if size < ctx.guild.filesize_limit:
-                await ctx.send(
+                await ctx.edit(
+                    content="Here you go!",
                     file=discord.File(
                         file_path,
                         f"{track['display_name']}.ogg",
@@ -105,8 +109,8 @@ class SpotifyDownload(commands.Cog):
                 )
             else:
                 await ctx.edit(
-                    content=f"Tải xuống {track['display_name']} "
-                    'thất bại: tệp quá lớn.'
+                    content=f"The download of {track['display_name']} "
+                    'failed: file too big.'
                 )
         finally:
             self.bot.downloading = False

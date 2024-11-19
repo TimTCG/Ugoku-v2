@@ -43,9 +43,8 @@ async def upload_cover(cover_bytes: bytes) -> Optional[CoverData]:
     cover_hash = hashlib.md5(cover_bytes).hexdigest()
 
     # Step 2: Check if the hash already exists in the cache
-    cache_file_path = os.path.join(TEMP_FOLDER, f"{cover_hash}.json")
-
-    if os.path.exists(cache_file_path):
+    cache_file_path: Path = TEMP_FOLDER / f"{cover_hash}.json"
+    if cache_file_path.is_file():
         # Step 3: If cached, read and return the stored dict
         with open(cache_file_path, 'r') as cache_file:
             cached_data: dict = json.load(cache_file)
@@ -133,7 +132,7 @@ async def generate_info_embed(
     title: str,
     album: str,
     artists: list,
-    cover_url: bytes | None,
+    cover_url: Optional[str],
     dominant_rgb: tuple[int, int, int],
 ) -> discord.Embed:
     """
@@ -144,7 +143,7 @@ async def generate_info_embed(
         title (str): The title of the track.
         album (str): The album name.
         artists (list): List of artist names.
-        cover_url (bytes | None): The URL of the cover image, or None if not available.
+        cover_url Optional[str]: The URL of the cover image, or None if not available.
         dominant_rgb (tuple[int, int, int]): The dominant RGB color of the cover.
 
     Returns:

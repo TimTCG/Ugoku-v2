@@ -13,38 +13,38 @@ class Stickers(commands.Cog):
 
     @commands.slash_command(
         name='get-stickers',
-        description='Tải bộ sticker từ Line từ URL.'
+        description='Download a LINE sticker pack from a given URL.',
+        integration_types={
+            discord.IntegrationType.guild_install,
+            discord.IntegrationType.user_install
+        }
     )
     async def stickers(
         self,
         ctx: discord.ApplicationContext,
-        url: str
+        url: discord.Option(
+            str,
+            required=True
+        )  # type: ignore
     ) -> None:
-        if not url:
-            await ctx.respond(
-                'Hãy nhập URL của một bộ sticker nhaa. '
-                'Vd: https://store.line.me/stickershop/product/1472670/'
-            )
-            return
-
-        await ctx.respond('Chờ mình một lát nhaa~')
+        await ctx.respond('Give me a second~')
 
         try:
             zip_file = await get_stickerpack(url, ctx=ctx)
         except IncorrectURL:
-            await ctx.edit(content='URL không hợp lệ. Hãy kiểm tra và thử lại nhé.')
+            await ctx.edit(
+                content="Invalid URL! Please check the URL and try again."
+                "\nExample: "
+                "https://store.line.me/stickershop/product/20347097/en"
+                )
             return
 
-        await ctx.send(
+        await ctx.edit(
             file=discord.File(zip_file),
-            content=f'<@{ctx.author.id} ơi, xin lỗi vì để bạn chờ>, '
-            "bộ sticker mà bạn yêu cầu ờ đây nhaa~"
+            content="Here's the sticker pack you requested~"
         )
-
         # Clean up the file after sending
         os.remove(zip_file)
-
-        await ctx.edit(content='Done!')
 
 
 def setup(bot):

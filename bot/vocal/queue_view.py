@@ -1,9 +1,11 @@
-from typing import List
+from typing import List, Union
+from datetime import datetime
 
 import discord
 from discord.ui import View
 
 from bot.vocal.custom import get_cover_data_from_hash
+from bot.utils import get_dominant_rgb_from_url
 from bot.vocal.types import QueueItem
 from config import DEFAULT_EMBED_COLOR
 
@@ -14,6 +16,9 @@ class QueueView(View):
         queue: List[QueueItem],
         to_loop: List[QueueItem],
         bot: discord.Bot,
+        last_played_time: datetime,
+        time_elapsed: int,
+        is_playing: bool,
         page: int = 1
     ) -> None:
         """
@@ -29,6 +34,9 @@ class QueueView(View):
         self.queue = queue
         self.to_loop = to_loop
         self.bot = bot
+        self.time_elapsed = time_elapsed
+        self.last_played_time = last_played_time
+        self.is_playing = is_playing
         self.page = page
         self.max_per_page = 7
         self.update_buttons()
@@ -138,6 +146,11 @@ class QueueView(View):
             cover_data = await self.bot.spotify.get_cover_data(track_info['id'])
         elif source == 'Custom':
             cover_data = await get_cover_data_from_hash(track_info['id'])
+        else:
+            cover_data = {
+                'url': track_info['cover'],
+                'dominant_rgb': await get_dominant_rgb_from_url(track_info['cover'])
+            }
 
         # Create the embed
         embed = discord.Embed(
@@ -150,8 +163,21 @@ class QueueView(View):
         now_playing = self.queue[0]['track_info']
         title = now_playing['display_name']
         url = now_playing['url']
+
+        # Time indication
+        if self.is_playing:
+            current_pos: int = (
+                self.time_elapsed +
+                (datetime.now() - self.last_played_time).seconds
+            )
+        else:
+            current_pos: int = self.time_elapsed
+        total_seconds: Union[int, str] = now_playing.get('duration', '?')
+        time_string = f"{current_pos}s / {total_seconds}s"
+
         embed.add_field(
-            name="Now Playing",
+            # Now playing + time indication
+            name=f"Now Playing - {time_string}",
             value=f"[{title}]({url})",
             inline=False
         )

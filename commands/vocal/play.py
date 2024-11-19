@@ -1,13 +1,17 @@
-from typing import Union, Optional
+from typing import Optional
 
 from discord.ext import commands
 import discord
 
-from bot.vocal.session_manager import session_manager
-from bot.vocal.audio_source_handlers import play_spotify, play_custom, play_onsei
-from bot.utils import is_onsei
+from bot.vocal.session_manager import session_manager as sm
+from bot.vocal.server_session import ServerSession
+from bot.vocal.audio_source_handlers import play_spotify, play_custom, play_onsei, play_youtube
+from bot.utils import is_onsei, send_response
 from bot.search import is_url
 from config import SPOTIFY_ENABLED
+
+
+default = 'Spotify' if SPOTIFY_ENABLED else 'Youtube'
 
 
 class Play(commands.Cog):
@@ -15,8 +19,8 @@ class Play(commands.Cog):
         self.bot = bot
 
     async def execute_play(
-        self, 
-        ctx: discord.ApplicationContext, 
+        self,
+        ctx: discord.ApplicationContext,
         query: str,
         source: str,
         interaction: Optional[discord.Interaction] = None
@@ -29,37 +33,48 @@ class Play(commands.Cog):
             edit = ctx.edit
 
         # Connect to the voice channel
-        session = await session_manager.connect(ctx, self.bot)
+        session: Optional[ServerSession] = await sm.connect(ctx, self.bot)
         if not session:
-            await respond('Bạn đang không ở trong kênh thoại!')
+            await respond('You are not in a voice channel!')
             return
 
-        await respond('Chờ mình một lát nha~')
-        
+        await send_response(respond, "Give me a second~", session.guild_id)
+
         source = source.lower()
+        youtube_domains = ['youtube.com', 'www.youtube.com', 'youtu.be']
+        spotify_domains = ['open.spotify.com']
 
         # Detect if the query refers to an Onsei
         if source == 'onsei' or is_onsei(query):
             await play_onsei(ctx, query, session)
 
-        # If the query is custom or an URL not from Spotify
+        # If the query is custom or an URL not from Spotify/Youtube
         elif (source == 'custom'
-              or (is_url(query) and not is_url(query, from_=['open.spotify.com']))):
+              or (is_url(query)
+                  and not is_url(query,
+                                 from_=spotify_domains+youtube_domains))):
             await play_custom(ctx, query, session)
 
-        # Else, search Spotify
+        # Else, search Spotify or Youtube
+        elif (source == 'youtube'
+              or is_url(query, from_=youtube_domains)):
+            await play_youtube(ctx, query, session, interaction)
+
         elif source == 'spotify':
             if not SPOTIFY_ENABLED:
-                await edit(content='Các tính năng Spotify hiện chưa được bật.')
+                await edit(
+                    content=('Spotify features are not enabled.')
+                )
                 return
-            await play_spotify(ctx, query, session, interaction=interaction)
+
+            await play_spotify(ctx, query, session, interaction)
 
         else:
-            await edit(content='ôi lmao')
+            await edit(content='wut duh')
 
     @commands.slash_command(
         name='play',
-        description='Chọn một bài hát để phát.'
+        description='Select a song to play.'
     )
     async def play(
         self,
@@ -67,8 +82,8 @@ class Play(commands.Cog):
         query: str,
         source: discord.Option(
             str,
-            choices=['Spotify', 'Custom', 'Onsei'],
-            default='Spotify'
+            choices=['Spotify', 'Youtube', 'Custom', 'Onsei'],
+            default=default
         )  # type: ignore
     ) -> None:
         await self.execute_play(ctx, query, source)
