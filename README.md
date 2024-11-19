@@ -41,7 +41,7 @@ Cảm ơn [Chinono](https://github.com/ChinHongTan) một lần nữa vì đã g
 
 <h2>Điểm chuẩn âm thanh</h2>
 
-> [!LƯU_Ý]
+> [!NOTE]
 > Ugoku-v2 chỉ sử dụng Spotify làm nguồn dịch vụ phát nhạc trực tuyến, vì vậy chuỗi âm thanh tốt nhất (bên cạnh các nguồn tùy chỉnh) là OGG 320kbps -> Opus 510kpbs. Mình đang có kế hoạch triển khai Deezer làm nguồn phát trực tuyến cho bot, để có được chất lượng âm thanh tốt nhất có thể từ bất kỳ Bot discord nào.
 
 <div align="center">
