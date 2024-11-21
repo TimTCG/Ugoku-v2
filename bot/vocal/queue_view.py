@@ -194,7 +194,7 @@ class QueueView(View):
                     for i in range(start_index + 1, end_index)
                 )
                 embed.add_field(
-                    name="Queue", value=queue_details, inline=False)
+                    name="Hàng chờ", value=queue_details, inline=False)
 
         # Songs in loop section
         end_index = min(start_index + self.max_per_page, len(self.to_loop))
