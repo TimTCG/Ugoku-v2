@@ -63,7 +63,7 @@ Các tính năng chatbot và Spotify đã tắt, nhưng bạn vẫn có thể ch
 
 <h2>Điểm chuẩn âm thanh</h2>
 
-> [!LƯU Ý]
+> [!NOTE]
 > Deezer cuối cùng đã được tích hợp vào Ugoku! Nội dung âm thanh không mất dữ liệu giờ đây sẽ được đưa vào các bản nhạc Spotify trước khi phát (khi có sẵn). Ugoku hiện cung cấp chất lượng âm thanh tốt nhất có thể cho bot Discord, gần như không thể phân biệt được với âm thanh không mất dữ liệu thực sự...ngoại trừ độ trễ thỉnh thoảng.
 
 > Tham chiếu chuẩn:
