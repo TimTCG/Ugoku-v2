@@ -1,6 +1,7 @@
 import re
 from urllib.parse import unquote
 from typing import Optional
+import asyncio
 
 
 import discord
@@ -18,7 +19,10 @@ async def play_spotify(
     ctx: discord.ApplicationContext,
     query: str,
     session: ServerSession,
-    interaction: Optional[discord.Interaction] = None
+    interaction: Optional[discord.Interaction] = None,
+    requested_source: str = 'Spotify',
+    offset: int = 0,
+    artist_mode: bool = False
 ) -> None:
     """
     Handles playback of Spotify tracks.
@@ -31,17 +35,32 @@ async def play_spotify(
         query (str): The Spotify track or playlist URL, or search query.
         session (ServerSession): The current server's audio session.
         interaction: A discord interaction if that method has been triggered by one.
+        requested_source: The streaming service that should be used (Spotify or Deezer).
     """
-    tracks_info = await ctx.bot.spotify.get_tracks(query)
-
-    if not tracks_info:
-        if interaction:
-            interaction.edit_original_message(content='Track not found!')
-        else:
-            await ctx.edit(content='Track not found!')
+    if len(query) >= 250:
+        await ctx.respond('Yêu cầu quá dài!')
         return
 
-    await session.add_to_queue(ctx, tracks_info, 'Spotify', interaction)
+    if artist_mode:
+        response = await asyncio.to_thread(
+            ctx.bot.spotify.sessions.sp.search, query, type='artist', limit=1
+        )
+        # Get the artist URL and get the tracks from it
+        tracks_info = (
+            await ctx.bot.spotify.get_tracks(
+                response['artists']['items'][0]['external_urls']['spotify'],
+                offset=offset
+            ) if response else None
+        )
+    else:
+        tracks_info = await ctx.bot.spotify.get_tracks(query, offset=offset)
+
+    if not tracks_info:
+        content = 'Không tìm thấy bài hát!'
+        await (interaction.edit_original_message(content=content) if interaction else ctx.edit(content=content))
+        return
+
+    await session.add_to_queue(ctx, tracks_info, requested_source, interaction)
 
 
 def get_display_name_from_query(query: str) -> str:
@@ -162,7 +181,7 @@ async def play_onsei(
             await ctx.edit(content='Không tìm thấy onsei!')
             return
         else:
-            await ctx.edit(content=f'An error occurred: {e.message}')
+            await ctx.edit(content=f'Có lỗi xảy ra: {e.message}')
             return
 
     # Grab the data needed
@@ -214,7 +233,7 @@ async def play_youtube(
     try:
         tracks_info = await ctx.bot.youtube.get_track_info(query)
     except DownloadError as e:
-        await edit(content='Tải xuống thất bại! Kohane đã bị phát hiện là bot.')
+        await edit(content='Tải thất bại: Kohane đã bị phát hiện là bot ;-;')
         return
 
     if not tracks_info:

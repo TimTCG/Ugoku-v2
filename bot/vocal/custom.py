@@ -133,7 +133,7 @@ async def generate_info_embed(
     album: str,
     artists: list,
     cover_url: Optional[str],
-    dominant_rgb: tuple[int, int, int],
+    dominant_rgb: tuple[int, int, int]
 ) -> discord.Embed:
     """
     Generate a Discord Embed with track information.
@@ -157,7 +157,7 @@ async def generate_info_embed(
         description=f"Bởi {artist_string}",
         color=discord.Colour.from_rgb(*dominant_rgb)
     ).add_field(
-        name="Nằm trong album",
+        name="Một phần của album",
         value=album,
         inline=True
     ).set_author(

@@ -38,7 +38,7 @@ class controlView(discord.ui.View):
             await resume_cog.execute_resume(self.ctx, send=True)
 
     @discord.ui.button(
-        label="Phát bài trước",
+        label="Bài trước",
         style=discord.ButtonStyle.secondary,
     )
     async def previous_button_callback(

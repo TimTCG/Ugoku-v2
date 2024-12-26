@@ -10,7 +10,7 @@ class Ping(commands.Cog):
 
     @commands.slash_command(
         name="ping",
-        description='Kiểm tra thời gian phản hồi của Ugoku !',
+        description='Kiểm tra thời gian phản hồi của Kohane !',
         integration_types={
             discord.IntegrationType.guild_install,
             discord.IntegrationType.user_install

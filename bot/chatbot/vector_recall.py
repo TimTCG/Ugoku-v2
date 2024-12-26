@@ -29,12 +29,12 @@ model = genai.GenerativeModel(
     model_name=GEMINI_UTILS_MODEL
 )
 PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
-pc = Pinecone(api_key=PINECONE_API_KEY)
 
 
 class QueryType(enum.Enum):
     QUESTION = 'question'
     INFO = 'info'
+    FACT = 'fact'
     OTHER = 'other'
 
 
@@ -44,11 +44,35 @@ class VectorMetadata(typing.TypedDict):
 
 
 class Memory:
-    def __init__(self, index_name: str) -> None:
-        logging.info("Initialization of Pinecone...")
-        existing_indexes = [index.name for index in pc.list_indexes()]
+    def __init__(self) -> None:
+        self.timezone = pytz.timezone(CHATBOT_TIMEZONE)
+        self.prompt = (
+            "Precise type of query,"
+            "Mark it as a fact if it tells interesting things about "
+            "the world or the person you're talking to."
+            "Extract facts synthetically, "
+            "Write English:"
+        )
+        self.active = False
+
+    async def init_pinecone(self, index_name: str) -> None:
+        if not PINECONE_API_KEY:
+            logging.warning("No valid Pinecone API key has been provided")
+            return
+
+        logging.info("Initialization of Pinecone..")
+        while not self.active:
+            try:
+                self.pc = Pinecone(api_key=PINECONE_API_KEY)
+                self.active = True
+            except:
+                await logging.error(
+                    "Connection to Pinecone API failed, trying again in 60 seconds.")
+                await asyncio.sleep(60)
+
+        existing_indexes = [index.name for index in self.pc.list_indexes()]
         if not index_name in existing_indexes:
-            pc.create_index(
+            self.pc.create_index(
                 index_name,
                 dimension=1024,
                 spec=ServerlessSpec(
@@ -56,18 +80,12 @@ class Memory:
                     region="us-east-1"
                 )
             )
-        self.index = pc.Index(index_name)
-        self.timezone = pytz.timezone(CHATBOT_TIMEZONE)
-        self.prompt = (
-            "Precise type of query."
-            "Summarize the message, "
-            "write English:"
-        )
+        self.index = self.pc.Index(index_name)
+        logging.info("Pinecone has been initialized successfully")
 
-    @staticmethod
-    async def generate_embeddings(inputs: list) -> list:
+    async def generate_embeddings(self, inputs: list) -> list:
         embeddings = await asyncio.to_thread(
-            pc.inference.embed,
+            self.pc.inference.embed,
             model="multilingual-e5-large",
             inputs=inputs,
             parameters={"input_type": "query", "truncate": "END"}
@@ -81,12 +99,15 @@ class Memory:
         author: str,
         id: int
     ) -> None:
+        if not self.active:
+            return
+
         # Infos to summarize
-        date_hour: str = datetime.now(self.timezone).strftime("%Y-%m-%d %H:%M")
+        date: str = datetime.now(self.timezone).strftime("%Y-%m-%d")
 
         # Generate metadata using Gemini
         metadata = json.loads((await model.generate_content_async(
-            self.prompt+user_text,
+            f"{self.prompt}{author} said {user_text}",
             generation_config=genai.types.GenerationConfig(
                 response_mime_type="application/json",
                 response_schema=VectorMetadata,
@@ -94,9 +115,9 @@ class Memory:
             )
         )).text)
         metadata['id'] = id
-        metadata['text'] = f"{author}, {date_hour}: {metadata['text']}"
+        metadata['text'] = f"{date}-{author}: {metadata['text']}"
 
-        if metadata['query_type'] in ['question', 'other']:
+        if metadata['query_type'] in ['info', 'question', 'other']:
             return
 
         # Create the embeddings/vectors
@@ -122,7 +143,10 @@ class Memory:
         top_k: int = PINECONE_RECALL_WINDOW,
         author: Optional[str] = '?',
         date_hour: str = ''
-    ) -> str:
+    ) -> Optional[str]:
+        if not self.active:
+            return
+
         infos = [
             date_hour,
             f"{author} says"
@@ -140,9 +164,10 @@ class Memory:
             include_metadata=True
         )
         rec = [match['metadata'].get('text') for match in results['matches']]
-        rec_string = ', '.join(str(recall).replace('\n', '') for recall in rec)
+        if rec:
+            rec_string = ', '.join(str(recall).replace('\n', '')
+                                   for recall in rec)
+            return rec_string
 
-        return rec_string
 
-
-memory = Memory('ugoku')
+memory = Memory()

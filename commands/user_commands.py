@@ -32,30 +32,35 @@ class Test(commands.Cog):
             choices=LANGUAGES,
             required=True,
             default='English'
-
-        ),  # type: ignore
+        ),
         nuance: discord.Option(
             str,
             choices=['Neutral', 'Casual', 'Formal'],
             required=True,
             default='Neutral'
-
-        ),  # type: ignore
+        ),
         ephemeral: bool = True
     ) -> None:
         await ctx.defer()
-        await ctx.respond(
-            content=Gembot.translate(
+
+        # Handle translation
+        try:
+            response = Gembot.translate(
                 query,
                 language=language,
                 nuance=nuance
-            ),
-            ephemeral=ephemeral
-        )
+            )
+            await ctx.respond(
+                content=response,
+                ephemeral=ephemeral
+            )
+        except Exception as e:
+            logging.error(f"Translation error: {e}")
+            await ctx.respond("Đã xảy ra lỗi khi dịch câu này.", ephemeral=ephemeral)
 
     @commands.slash_command(
         name='ask',
-        description='Hỏi Ugoku mọi thứ !',
+        description='Hỏi Kohane mọi thứ !',
         integration_types={
             discord.IntegrationType.user_install,
             discord.IntegrationType.guild_install
@@ -67,24 +72,27 @@ class Test(commands.Cog):
         query: str,
         ephemeral: bool = True
     ) -> None:
-        guild_id = ctx.guild.id
+        # Determine the context (DM or server)
+        context_id = ctx.guild.id if ctx.guild else ctx.author.id
         author_name = ctx.author.global_name
 
         if not CHATBOT_ENABLED:
-            await ctx.respond("Tính năng chatbot chưa được bật")
+            await ctx.respond("Tính năng chatbot chưa được bật.")
             return
-        if ctx.guild.id not in CHATBOT_WHITELIST:
+
+        # Skip whitelist check for DMs
+        if ctx.guild and ctx.guild.id not in CHATBOT_WHITELIST:
             await ctx.respond("Máy chủ này không được phép sử dụng lệnh.")
             return
 
         await ctx.defer()
 
         # Create/Use a chat
-        if guild_id not in active_chats:
-            chat = Gembot(guild_id)
-        chat = active_chats.get(guild_id)
+        if context_id not in active_chats:
+            active_chats[context_id] = Gembot(context_id)
+        chat = active_chats.get(context_id)
 
-        # Remove continuous chat notice (if enabled the msg before)
+        # Remove continuous chat notice (if enabled before)
         if chat.status == 1:
             chat.status = 2
 
@@ -94,7 +102,6 @@ class Test(commands.Cog):
                 user_query=query,
                 author=author_name
             )
-
         except BlockedPromptException:
             await ctx.respond(
                 "*filtered*",
@@ -102,24 +109,20 @@ class Test(commands.Cog):
             )
             logging.error(f"Response blocked by Gemini in {chat.id_}")
             return
-
-        except BlockedPromptException:
-            logging.error(
-                "Prompt against Gemini's policies! "
-                "Please change it and try again."
-            )
+        except Exception as e:
+            logging.error(f"Chatbot error: {e}")
+            await ctx.respond("Đã xảy ra lỗi khi xử lý yêu cầu của bạn.", ephemeral=ephemeral)
             return
 
         # Response
-        formatted_reply = (
-            f"-# {author_name}: {query}\n{chat.format_reply(reply)}")
+        formatted_reply = f"-# {author_name}: {query}\n{chat.format_reply(reply)}"
         await ctx.respond(formatted_reply, ephemeral=ephemeral)
 
         # Memory
         await chat.memory.store(
             query,
             author=author_name,
-            id=guild_id
+            id=context_id
         )
 
 

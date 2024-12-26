@@ -1,4 +1,3 @@
-
 import logging
 from httpx._exceptions import HTTPStatusError
 
@@ -17,7 +16,7 @@ class Danbooru_(commands.Cog):
 
     @commands.slash_command(
         name="danbooru",
-        description='Lấy một hình bất kỳ từ Danbooru ! (ảnh phù hợp với gia đình)',
+        description='Lấy một ảnh bất kỳ từ một tag trên danbooru (ảnh phù hợp với gia đình)',
         integration_types={
             discord.IntegrationType.guild_install,
             discord.IntegrationType.user_install
@@ -39,10 +38,10 @@ class Danbooru_(commands.Cog):
             )
         except HTTPStatusError as e:
             logging.error(f"Failed to get posts from {tag}: {e}")
-            await ctx.respond(f"Can't get posts from {tag}.")
+            await ctx.respond(f"Không thể láy bài đăng từ {tag}.")
             return
         if not posts:
-            await ctx.respond("No post found !")
+            await ctx.respond("Không tìm thấy bài đăng !")
             return
 
         sent = False
@@ -83,7 +82,7 @@ class Danbooru_(commands.Cog):
             break
 
         if not sent:
-            await ctx.respond('Failed to find a post !')
+            await ctx.respond('Không thể tìm bài đăng !')
 
 
 def setup(bot):

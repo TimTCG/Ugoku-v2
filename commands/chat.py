@@ -1,3 +1,4 @@
+import os
 import logging
 
 import discord
@@ -22,81 +23,51 @@ if CHATBOT_ENABLED:
 
         @commands.slash_command(
             name="reset_chatbot",
-            description=(
-                "Đặt lại tiến trình bot "
-                "Thích hợp khi bot bắt đầu lên cơn điên."
-            ),
-            integration_types={
-                discord.IntegrationType.guild_install,
-                discord.IntegrationType.user_install
-            }
+            description="Resets the chatbot."
         )
         async def reset_chatbot(self, ctx: discord.ApplicationContext) -> None:
-            channel = ctx.channel
-            dm = isinstance(channel, discord.DMChannel)
-            Gembot(ctx.guild_id if not dm else channel.id)
-            await ctx.respond("Success !")
+            Gembot(ctx.guild_id)
+            await ctx.respond("Done!")
 
         @commands.Cog.listener()
         async def on_message(self, message: discord.Message) -> None:
-            dm = isinstance(message.channel, discord.DMChannel)
-            server = message.guild
-            if not server and not dm:
-                return
-
-            id_ = server.id if server else message.channel.id
-
-            # Only allow whitelisted servers / dms if enabled
-            if (not dm and id_ not in CHATBOT_WHITELIST) or (dm and not ALLOW_CHATBOT_IN_DMS):
-                return
-
-            # Ignore if the message is from Ugoku !
+            # Ignore messages from the bot itself
             if message.author == self.bot.user:
                 return
 
-            # Create/Use a chat
-            if id_ not in active_chats:
-                chat = Gembot(id_)
-            chat = active_chats.get(id_)
-
-            # Neko arius
-            lowered_msg = message.content.lower()
-            if any(lowered_msg.startswith(neko) for neko in ['-neko', '- neko']):
-                await message.channel.send('Arius')
+            # Handle record requests
+            record_handled = await handle_record_request(self.bot, message)
+            if record_handled:
                 return
 
-            if await chat.is_interacting(message) or dm:
+            # Chatbot interaction logic
+            server_id = message.guild.id if message.guild else message.author.id  # Use author ID for DM interactions
+            if server_id not in active_chats:
+                active_chats[server_id] = Gembot(server_id)
+            
+            chat = active_chats[server_id]
+            if await chat.is_interacting(message):
                 async with message.channel.typing():
-                    params = await chat.get_params(message)
                     try:
+                        params = await chat.get_params(message)
                         reply = await chat.send_message(*params)
+                        formatted_reply = chat.format_reply(reply)
+                        await message.channel.send(formatted_reply)
+
+                        await chat.memory.store(
+                            params[0],
+                            author=message.author.name,
+                            id=server_id,
+                        )
                     except StopCandidateException:
                         await message.channel.send("*filtered*")
-                        logging.error(
-                            f"Response blocked by Gemini in {chat.id}")
-                        return
                     except BlockedPromptException:
-                        logging.error(
-                            "Prompt against Gemini's policies! "
-                            "Please change it and try again."
-                        )
-                        return
+                        logging.error("Blocked prompt!")
 
-                    # Add chat status, remove default emoticons
-                    formatted_reply = chat.format_reply(reply)
-                await message.channel.send(formatted_reply)
-
-                # Memory
-                await chat.memory.store(
-                    params[0],
-                    author=message.author.global_name,
-                    id=id_,
-                )
 else:
     class Chatbot(commands.Cog):
         def __init__(self, bot) -> None:
             self.bot = bot
-
 
 def setup(bot):
     bot.add_cog(Chatbot(bot))
