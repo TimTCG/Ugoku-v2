@@ -1,68 +1,71 @@
 import asyncio
 import os
 import logging
+import urllib.parse
 
 import discord
 from discord.ext import commands
 from deezer.errors import DataException
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
+from google.cloud import storage
+from datetime import timedelta
 
 from config import DEEZER_ENABLED
 from bot.utils import cleanup_cache, tag_flac_file, get_cache_path
 
-end_url=os.getenv("ENDPOINT_URL")
-
-# Initialize the R2 client
-r2_client = boto3.client(
-    's3',
-    endpoint_url=end_url,
-    aws_access_key_id=os.getenv("AWS_SECRET_KEY_ID"),
-    aws_secret_access_key=os.getenv("AWS_SECRET_KEY")
-)
-
 class DeezerDownload(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
+        self.gcs_client = storage.Client()
+        self.bucket_name = "ugoku"  # Ensure this is set in your environment
+        self.custom_domain = os.getenv("CUSTOM_DOMAIN")  # Optional custom domain
+
+    async def upload_to_gcs(self, file_path, display_name):
+        bucket = self.gcs_client.bucket(self.bucket_name)
+        blob = bucket.blob(f"tracks/{display_name}.flac")
+        
+        try:
+            blob.upload_from_filename(file_path, content_type="audio/flac")
+            signed_url = blob.generate_signed_url(
+            expiration=timedelta(days=7),
+            method="GET"
+        )
+            return signed_url
+        except Exception as e:
+            logging.error(f"GCS Upload failed: {e}")
+            return None
 
     @commands.slash_command(
         name='dzdl',
-        description='Tải bài hát chất lượng cao từ Deezer.',
+        description='Tải nhạc chất lượng cao từ Deezer',
         integration_types={
             discord.IntegrationType.guild_install,
             discord.IntegrationType.user_install,
         }
     )
-    async def dzdl(
-        self,
-        ctx: discord.ApplicationContext,
-        query: str
-    ) -> None:
+    async def dzdl(self, ctx: discord.ApplicationContext, query: str) -> None:
         if not DEEZER_ENABLED:
-            await ctx.respond(content='Tính năng Deezer chưa được bật.')
+            await ctx.respond(content='Các tính năng Deezer chưa được bật')
             return
 
         await ctx.respond('Chờ mình một lát nha~')
-
+        self.bot.downloading = True
+        
         try:
-            track = await self.bot.deezer.get_stream_url_from_query(query)
-            logging.info(f"Track data: {track}")
+            track = await self.bot.deezer.get_track_from_query(query)
+            if not track:
+                await ctx.edit(content="Không tìm thấy bài hát!")
+                return
         except DataException:
-            await ctx.edit(content="Không tìm thấy bài hát !")
-            return
-        if not track:
-            await ctx.edit(content="Không tìm thấy bài hát !")
+            await ctx.edit(content="Không tìm thấy bài hát!")
             return
 
-        # Set the cache path
-        cleanup_cache()
-        file_path = get_cache_path(str(track['track_id']).encode('utf-8'))
+        await cleanup_cache()
+        cache_id = f"deezer{track['id']}"
+        file_path = get_cache_path(cache_id.encode('utf-8'))
 
-        # Download
         if not file_path.is_file():
-            file_path = await asyncio.to_thread(self.bot.deezer.download, track)
+            file_path = await self.bot.deezer.download(track)
 
-        # Tag the file
         display_name = f"{track['artist']} - {track['title']}"
         await tag_flac_file(
             file_path,
@@ -73,34 +76,28 @@ class DeezerDownload(commands.Cog):
             album_cover_url=track['cover']
         )
 
-        display_name_link = display_name.replace(' ','%20')
-
         size = os.path.getsize(file_path)
-        if size < ctx.guild.filesize_limit:
-            await ctx.edit(
-                content="Của bạn đây !",
-                file=discord.File(
-                    file_path,
-                    filename=f"{display_name}.flac"
-                )
-            )
-        else:
+        size_limit = ctx.guild.filesize_limit if ctx.guild else 26214400
+
+        if size < size_limit:
             try:
-                bucket_name = os.getenv("BUCKET_NAME")
-                key = f"tracks/{display_name}.flac"
-                key_link = f"{bucket_name}/tracks/{display_name_link}.flac"
-                
-                r2_client.upload_file(file_path, bucket_name, key)
+                await ctx.edit(
+                    content="Here you go!",
+                    file=discord.File(file_path, filename=f"{display_name}.flac")
+                )
+                return
+            except discord.errors.HTTPException as e:
+                if e.status == 413:
+                    logging.error(f"File not uploaded: {cache_id} is too big: {size} bytes")
 
-                custom_domain= os.getenv("CUSTOM_DOMAIN")
-                if custom_domain:
-                    public_url = f"{custom_domain}/{key_link}"
-                else:
-                    public_url = f"{end_url}/{key_link}"
+        await ctx.edit(content="Đang tải lên Cloud...")
 
-                await ctx.edit(content=f"Tệp quá lớn. Bạn có thể tải tại đây: {public_url}")
-            except (BotoCoreError, ClientError) as e:
-                logging.error(f"Error uploading to R2: {e}")
-                await ctx.edit(content="Tải thất bại: Không thể tải lên R2.")
+        file_url = await self.upload_to_gcs(file_path, display_name)
+        if file_url:
+            await ctx.edit(content=f"Tệp quá lớn, hãy sử dụng link này nhé (Link chỉ có hạn trong 7 ngày): {file_url}")
+        else:
+            await ctx.edit(content="Không thể tải lên Cloud")
+
+
 def setup(bot):
     bot.add_cog(DeezerDownload(bot))
